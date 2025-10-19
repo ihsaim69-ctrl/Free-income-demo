@@ -1,71 +1,529 @@
+<!--
+Demo: "Free Income Demo" (Offline single-file)
+Instructions:
+1. Save this file as index.html
+2. Open with Chrome (or any browser) to run.
+3. Admin account: username: admin  password: admin123
+4. To test referral: sign up user A, copy referral code from profile, sign up user B using that ref code.
+5. This is a front-end demo using localStorage only — no real payments.
+-->
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Free Income Site</title>
-  <style>
-    body {
-      font-family: "Noto Sans Bengali", sans-serif;
-      text-align: center;
-      background: #e6f2ff;
-      color: #003366;
-      padding: 20px;
-    }
-    h1 {
-      color: #007bff;
-    }
-    .balance {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      display: inline-block;
-      margin: 10px 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    button {
-      display: block;
-      width: 90%;
-      max-width: 300px;
-      margin: 10px auto;
-      padding: 12px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .msg {
-      margin-top: 15px;
-      font-weight: bold;
-      color: green;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Free Income — Demo (Offline)</title>
+<style>
+  :root{
+    --bg:#eaf4ff; --primary:#007bff; --dark:#003366; --ok:#28a745;
+  }
+  body{font-family: "Noto Sans Bengali",sans-serif; margin:0; background:var(--bg); color:var(--dark);}
+  header{background:linear-gradient(90deg,#f8fbff,#e6f2ff); padding:12px 18px; display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+  header h1{margin:0;font-size:18px;color:var(--primary)}
+  .container{max-width:960px;margin:18px auto;padding:12px}
+  .card{background:white;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+  .flex{display:flex;gap:12px;align-items:center}
+  .btn{background:var(--primary);color:white;padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
+  .btn.secondary{background:#0056b3}
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid #bcd7ff}
+  input,select{padding:8px;border-radius:8px;border:1px solid #ccdbea;width:100%}
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:12px}
+  .task{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;border:1px dashed #e0efff;margin-bottom:8px}
+  .small{font-size:13px;color:#4b5563}
+  .center{text-align:center}
+  .muted{color:#6b7280}
+  .gold{color:#b88700}
+  .green{color:var(--ok)}
+  footer{font-size:13px;color:#6b7280;text-align:center;margin-top:14px}
+  .hidden{display:none}
+  .profile-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid #eef6ff;text-align:left}
+  .danger{background:#ffeef0;color:#b91c1c;padding:6px;border-radius:6px}
+  @media(max-width:900px){.cols{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
 
-  <h1>💰 Free Income Site</h1>
-  <div class="balance">বর্তমান ব্যালেন্স: <span id="balance">0</span> টাকা</div>
+<header>
+  <h1>💰 Free Income Demo — (রিয়েল মত দেখো)</h1>
+  <div>
+    <span id="topUser" class="small muted">Not logged in</span>
+    <button class="btn ghost" onclick="openLogin()">লগইন / সাইন-আপ</button>
+  </div>
+</header>
 
-  <button onclick="completeTask(5)">📱 অ্যাপ ডাউনলোড করুন</button>
-  <button onclick="completeTask(2)">🧭 ডেইলি চেকইন</button>
-  <button onclick="completeTask(3)">🎬 বিজ্ঞাপন দেখুন</button>
+<div class="container">
+  <!-- Login area (modal-like) -->
+  <div id="loginCard" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">লগইন / সাইন-আপ</h3>
+      <div><button class="btn ghost" onclick="closeLogin()">বন্ধ</button></div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label>ইউজারনেম (ইংরেজিতে)</label>
+          <input id="signup_username" placeholder="username"/>
+        </div>
+        <div>
+          <label>পাসওয়ার্ড</label>
+          <input id="signup_password" type="password" placeholder="password"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div>
+          <label>রেফারেল কোড (ঐচ্ছিক)</label>
+          <input id="signup_ref" placeholder="ref_xxx"/>
+        </div>
+        <div class="center" style="align-self:end">
+          <button class="btn" onclick="signup()">নতুন সাইন-আপ</button>
+        </div>
+      </div>
 
-  <div class="msg" id="msg"></div>
+      <hr style="margin:12px 0"/>
 
-  <script>
-    let balance = 0;
-    function completeTask(amount) {
-      balance += amount;
-      document.getElementById('balance').textContent = balance;
-      document.getElementById('msg').textContent = `✅ টাস্ক সম্পন্ন! ${amount} টাকা যোগ হয়েছে।`;
-      setTimeout(() => { document.getElementById('msg').textContent = ''; }, 2000);
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label>লগইন ইউজারনেম</label>
+          <input id="login_username" placeholder="username"/>
+        </div>
+        <div>
+          <label>লগইন পাসওয়ার্ড</label>
+          <input id="login_password" type="password" placeholder="password"/>
+        </div>
+      </div>
+      <div style="margin-top:8px" class="center">
+        <button class="btn" onclick="login()">লগইন</button>
+        <button class="btn ghost" onclick="guestLogin()">গেস্ট হিসেবে দেখো</button>
+      </div>
+      <p class="small muted" style="margin-top:8px">Admin: username <strong>admin</strong>, password <strong>admin123</strong></p>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="cols">
+    <div>
+      <!-- Dashboard card -->
+      <div class="card" id="dashboard" >
+        <div class="profile-row">
+          <div>
+            <div class="small muted">স্বাগতম — <strong id="displayName">Guest</strong></div>
+            <div style="margin-top:6px">বর্তমান ব্যালেন্স: <span id="balance" style="font-size:18px;color:var(--primary)">0</span> টাকা</div>
+          </div>
+          <div style="text-align:right">
+            <button class="btn" onclick="openTasks()">টাস্ক কমপ্লিট করুন</button>
+            <button class="btn ghost" onclick="openProfile()">প্রোফাইল</button>
+          </div>
+        </div>
+
+        <hr style="margin:12px 0"/>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1 1 220px;">
+            <div class="small muted">আজকের স্ট্যাটাস</div>
+            <div id="todayTasks" style="margin-top:8px"></div>
+          </div>
+          <div style="flex:1 1 220px;">
+            <div class="small muted">রেফারেল</div>
+            <div id="refBox" style="margin-top:8px">লগইন করে দেখো</div>
+          </div>
+          <div style="flex:1 1 220px;">
+            <div class="small muted">উইথড্রাল</div>
+            <div style="margin-top:8px">
+              <button class="btn secondary" onclick="openWithdraw()">উইথড্রাল রিকোয়েস্ট</button>
+              <button class="btn ghost" onclick="openAddMoney()">অ্যাড টাকা (ডেমো)</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tasks modal -->
+      <div id="tasksCard" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">টাস্ক লিস্ট</h3>
+          <div><button class="btn ghost" onclick="closeTasks()">বন্ধ</button></div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="small muted">নিচে ক্লিক করে টাস্ক দেখুন — ডাউনলোড এ ক্লিক করলে টাস্ক কমপ্লিট হিসেবে মার্ক হবে।</div>
+          <div id="tasksList" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div id="profileCard" class="card hidden">
+        <div style="display:flex;justify-content:space-between">
+          <h3 style="margin:0">প্রোফাইল</h3>
+          <div><button class="btn ghost" onclick="closeProfile()">বন্ধ</button></div>
+        </div>
+        <div style="margin-top:10px">
+          <label>নাম</label>
+          <input id="profile_name" />
+          <label style="margin-top:8px">বিকাশ নম্বর (ডেমো)</label>
+          <input id="profile_bkash" placeholder="01XXXXXXXXX"/>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn" onclick="saveProfile()">সেভ করো</button>
+            <button class="btn ghost" onclick="copyReferral()">রেফার লিংক কপি</button>
+          </div>
+          <div style="margin-top:12px" class="small muted">
+            তোমার রেফারেল লিংক: <span id="referralLink">লগইন করলে দেখবে</span>
+          </div>
+          <div style="margin-top:12px">
+            <button class="btn danger" onclick="logout()">লগ আউট</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add money (demo) -->
+      <div id="addMoneyCard" class="card hidden">
+        <div style="display:flex;justify-content:space-between">
+          <h3 style="margin:0">অ্যাড টাকা (ডেমো)</h3>
+          <div><button class="btn ghost" onclick="closeAddMoney()">বন্ধ</button></div>
+        </div>
+        <div style="margin-top:10px">
+          <label>টাকার পরিমাণ (টেম্প)</label>
+          <input id="add_amount" placeholder="50" />
+          <div style="margin-top:8px">
+            <button class="btn" onclick="doAddMoney()">অ্যাড (ডেমো)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Withdraw -->
+      <div id="withdrawCard" class="card hidden">
+        <div style="display:flex;justify-content:space-between">
+          <h3 style="margin:0">উইথড্রাল রিকোয়েস্ট</h3>
+          <div><button class="btn ghost" onclick="closeWithdraw()">বন্ধ</button></div>
+        </div>
+        <div style="margin-top:10px">
+          <label>উইথড্রাল পরিমাণ</label>
+          <input id="withdraw_amount" placeholder="100" />
+          <label style="margin-top:8px">বিকাশ নম্বর</label>
+          <input id="withdraw_bkash" placeholder="01XXXXXXXXX" />
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn" onclick="requestWithdraw()">রিকোয়েস্ট</button>
+          </div>
+          <div id="withdrawMsg" class="small muted" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column (Admin + Stats) -->
+    <div>
+      <div class="card">
+        <h3 style="margin:0">স্ট্যাটস</h3>
+        <div style="margin-top:10px" id="statBox">
+          <div class="small muted">মোট ইউজার: <strong id="statUsers">0</strong></div>
+          <div class="small muted">এক্টিভ (আজ): <strong id="statActive">0</strong></div>
+          <div class="small muted">মোট ব্যালেন্স (সম্ভাব্য): <strong id="statTotal">0</strong> টাকা</div>
+          <div style="margin-top:8px">
+            <button class="btn ghost" onclick="openAdmin()">Admin প্যানেল</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminPanel" class="card hidden">
+        <h3 style="margin:0">Admin Panel</h3>
+        <div style="margin-top:10px">
+          <div class="small muted">ব্যবহারকারী তালিকা</div>
+          <div style="max-height:220px;overflow:auto;margin-top:8px">
+            <table id="usersTable">
+              <thead><tr><th>Username</th><th>Name</th><th>Balance</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px">
+            <div class="small muted">উইথড্রাল রিকোয়েস্ট</div>
+            <div id="withdrawList" style="margin-top:8px"></div>
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn ghost" onclick="closeAdmin()">বন্ধ</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="muted">Demo — কোনো বাস্তব পেমেন্ট নেই। পেমেন্ট/রিয়েল সিস্টেম যোগ করতে চাইলে আমি Firebase + bKash integration গাইড দিতে পারি।</footer>
+</div>
+
+<script>
+/* ---------------------
+  Data model (localStorage)
+  - users: object keyed by username
+    {
+      password,
+      name,
+      bkash,
+      balance,
+      completedTasks: {taskId:true},
+      lastCheckIn: "YYYY-MM-DD",
+      referral: "ref_username",
+      referrals: [],
+      withdrawals: [{id,amount,bkash,status}]
     }
-  </script>
+  - currentUser: username|null
+  ---------------------- */
 
-</body>
-</html>
+const TASKS = [
+  {id:'tiktok', title:'TikTok ডাউনলোড করুন', reward:10, desc:'TikTok অ্যাপ ডাউনলোড করলে পেতে পারেন 10 টাকা (ডেমো)'},
+  {id:'imo', title:'IMO ডাউনলোড করুন', reward:8, desc:'IMO অ্যাপ ডাউনলোড করলে পেতে পারেন 8 টাকা (ডেমো)'},
+  {id:'messenger', title:'Messenger ডাউনলোড করুন', reward:7, desc:'Messenger অ্যাপ ডাউনলোড করলে পেতে পারেন 7 টাকা (ডেমো)'},
+  {id:'checkin', title:'ডেইলি চেক-ইন', reward:2, desc:'প্রতিদিন একবার চেক-ইন করলে 2 টাকা (ডেমো)'},
+];
+
+function loadUsers(){ return JSON.parse(localStorage.getItem('demo_users')||'{}'); }
+function saveUsers(u){ localStorage.setItem('demo_users', JSON.stringify(u)); }
+function getCurrent(){ return localStorage.getItem('demo_current') || null; }
+function setCurrent(x){ if(x) localStorage.setItem('demo_current', x); else localStorage.removeItem('demo_current'); updateUI(); }
+
+function openLogin(){ document.getElementById('loginCard').classList.remove('hidden'); }
+function closeLogin(){ document.getElementById('loginCard').classList.add('hidden'); }
+function openTasks(){ if(!getCurrent()){ alert('প্রথমে লগইন করুন'); openLogin(); return; } renderTasks(); document.getElementById('tasksCard').classList.remove('hidden'); }
+function closeTasks(){ document.getElementById('tasksCard').classList.add('hidden'); }
+function openProfile(){ if(!getCurrent()){ alert('প্রথমে লগইন করুন'); openLogin(); return; } renderProfile(); document.getElementById('profileCard').classList.remove('hidden'); }
+function closeProfile(){ document.getElementById('profileCard').classList.add('hidden'); }
+function openAddMoney(){ if(!getCurrent()){ alert('প্রথমে লগইন করুন'); openLogin(); return; } document.getElementById('addMoneyCard').classList.remove('hidden'); }
+function closeAddMoney(){ document.getElementById('addMoneyCard').classList.add('hidden'); }
+function openWithdraw(){ if(!getCurrent()){ alert('প্রথমে লগইন করুন'); openLogin(); return; } document.getElementById('withdrawCard').classList.remove('hidden'); }
+function closeWithdraw(){ document.getElementById('withdrawCard').classList.add('hidden'); }
+
+function signup(){
+  const username = (document.getElementById('signup_username').value||'').trim();
+  const password = document.getElementById('signup_password').value||'';
+  const ref = (document.getElementById('signup_ref').value||'').trim();
+  if(!username || !password){ alert('username এবং password দিতে হবে'); return; }
+  const users = loadUsers();
+  if(users[username]){ alert('এই username ইতোমধ্যে আছে — আলাদা একটি ব্যবহার করো'); return; }
+  users[username] = {
+    password, name:username, bkash:'', balance:0, completedTasks:{}, lastCheckIn:null,
+    referral:`ref_${username}`, referrals:[], withdrawals:[]
+  };
+  // referral bonus (demo)
+  if(ref){
+    // find referrer by referral code
+    for(const u in users){
+      if(users[u].referral === ref){
+        users[u].balance += 5; // refer bonus
+        users[u].referrals.push(username);
+        alert('রেফারারকে ডেমো বোনাস দেওয়া হয়েছে (৫ টাকা)');
+        break;
+      }
+    }
+  }
+  saveUsers(users);
+  setCurrent(username);
+  closeLogin();
+  updateUI();
+  alert('সাইন-আপ সফল — আপনি logged in হয়েছেন');
+}
+
+function login(){
+  const username = (document.getElementById('login_username').value||'').trim();
+  const password = document.getElementById('login_password').value||'';
+  const users = loadUsers();
+  if(!users[username] || users[username].password !== password){ alert('লগইন ব্যর্থ — username/password চেক করো'); return; }
+  setCurrent(username);
+  closeLogin();
+  updateUI();
+}
+
+function guestLogin(){
+  // create or reuse guest user
+  const username = 'guest_'+Math.floor(Math.random()*10000);
+  const users = loadUsers();
+  users[username] = {password:'', name:'Guest', bkash:'', balance:0, completedTasks:{}, lastCheckIn:null, referral:`ref_${username}`, referrals:[], withdrawals:[]};
+  saveUsers(users);
+  setCurrent(username);
+  closeLogin();
+  updateUI();
+}
+
+function logout(){
+  setCurrent(null);
+  alert('Logged out');
+}
+
+function renderTasks(){
+  const cur = getCurrent();
+  const users = loadUsers();
+  const user = users[cur];
+  const list = document.getElementById('tasksList');
+  list.innerHTML = '';
+  TASKS.forEach(t=>{
+    const completed = user && user.completedTasks && user.completedTasks[t.id];
+    const div = document.createElement('div');
+    div.className='task';
+    div.innerHTML = `<div>
+        <div style="font-weight:600">${t.title}</div>
+        <div class="small muted">${t.desc}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small muted">ইন: <strong>${t.reward} টাকা</strong></div>
+        <div style="margin-top:8px">
+          <button class="btn" ${completed ? 'disabled' : ''} onclick="performTask('${t.id}')">${completed ? '✓ সম্পন্ন' : 'ডাউনলোড/করো'}</button>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function performTask(taskId){
+  const cur = getCurrent();
+  if(!cur){ alert('লগইন করো'); return; }
+  const users = loadUsers(); const user = users[cur];
+  // special: checkin
+  if(taskId==='checkin'){
+    const today = new Date().toISOString().slice(0,10);
+    if(user.lastCheckIn===today){ alert('আজ আপনি ইতিমধ্যে চেক-ইন করেছেন'); return; }
+    user.balance += TASKS.find(x=>x.id==='checkin').reward;
+    user.lastCheckIn = today;
+    saveUsers(users);
+    updateUI();
+    alert('ডেইলি চেক-ইন সম্পন্ন — ব্যালেন্স যোগ হয়েছে');
+    renderTasks();
+    return;
+  }
+  // For other tasks: simulate "download then verify"
+  const t = TASKS.find(x=>x.id===taskId);
+  if(!t) return;
+  // Show confirm popup to simulate external download
+  if(confirm(`${t.title} আপনি নিশ্চিত? (ডেমো) - ${t.reward} টাকা পাবে`)){
+    // Mark completed and add balance only if not previously completed
+    if(!user.completedTasks) user.completedTasks = {};
+    if(user.completedTasks[taskId]){ alert('এই টাস্ক আগে করা আছে'); return; }
+    user.completedTasks[taskId] = true;
+    user.balance += t.reward;
+    saveUsers(users);
+    updateUI();
+    renderTasks();
+    alert(t.reward + ' টাকা যোগ হয়েছে (ডেমো)');
+  }
+}
+
+function renderProfile(){
+  const cur = getCurrent();
+  const users = loadUsers();
+  const user = users[cur];
+  document.getElementById('profile_name').value = user.name || '';
+  document.getElementById('profile_bkash').value = user.bkash || '';
+  document.getElementById('referralLink').textContent = location.origin + '/?ref=' + user.referral;
+}
+
+function saveProfile(){
+  const cur = getCurrent();
+  if(!cur){ alert('লগিন করো'); return; }
+  const users = loadUsers();
+  users[cur].name = document.getElementById('profile_name').value || cur;
+  users[cur].bkash = document.getElementById('profile_bkash').value || '';
+  saveUsers(users);
+  updateUI();
+  alert('প্রোফাইল সেভ হয়েছে');
+}
+
+function copyReferral(){
+  const cur = getCurrent();
+  if(!cur){ alert('লগইন করো'); return; }
+  const users = loadUsers();
+  const link = location.origin + '/?ref=' + users[cur].referral;
+  navigator.clipboard?.writeText(link).then(()=>alert('রেফার লিংক কপি হয়েছে'), ()=>alert('কপি ব্যর্থ — ম্যানুয়ালি কপি করো: ' + link));
+}
+
+function doAddMoney(){
+  const amt = parseInt(document.getElementById('add_amount').value||'0');
+  if(!amt || amt<=0){ alert('বৈধ সংখ্যা দাও'); return; }
+  const cur = getCurrent();
+  if(!cur){ alert('লগইন করো'); return; }
+  const users = loadUsers(); users[cur].balance += amt; saveUsers(users);
+  closeAddMoney(); updateUI(); alert('ডেমো: ' + amt + ' টাকা যোগ হয়েছে');
+}
+
+function requestWithdraw(){
+  const amt = parseInt(document.getElementById('withdraw_amount').value||'0');
+  const bk = document.getElementById('withdraw_bkash').value||'';
+  const cur = getCurrent();
+  if(!cur){ alert('লগইন করো'); return; }
+  const users = loadUsers(); const user = users[cur];
+  if(amt<=0 || amt>user.balance){ alert('বৈধ পরিমাণ দিন এবং নিশ্চিত করুন আপনার ব্যালেন্স আছে'); return; }
+  const id = 'wd_'+Date.now();
+  user.withdrawals.push({id, amount:amt, bkash:bk, status:'pending'});
+  user.balance -= amt; // temporarily deduct
+  saveUsers(users);
+  closeWithdraw(); updateUI(); alert('উইথড্রাল রিকোয়েস্ট পাঠানো হয়েছে (ডেমো)');
+}
+
+/* Admin */
+function openAdmin(){
+  const cur = getCurrent();
+  if(cur !== 'admin'){ const pw = prompt('Admin password চাই — প্রবেশ করতে:'); if(pw !== 'admin123'){ alert('পাসওয়ার্ড ভুল'); return; } setCurrent('admin'); }
+  renderAdmin();
+  document.getElementById('adminPanel').classList.remove('hidden');
+}
+function closeAdmin(){ document.getElementById('adminPanel').classList.add('hidden'); if(getCurrent()==='admin') setCurrent(null); }
+function renderAdmin(){
+  const users = loadUsers();
+  const tbody = document.querySelector('#usersTable tbody');
+  tbody.innerHTML = '';
+  let total = 0, cnt=0;
+  for(const u in users){
+    cnt++;
+    total += Number(users[u].balance||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${u}</td><td>${users[u].name||''}</td><td>${users[u].balance||0}</td>
+      <td>
+        <button class="btn ghost" onclick="adminViewUser('${u}')">View</button>
+        <button class="btn" onclick="adminResetUser('${u}')">Reset</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+  document.getElementById('statUsers').textContent = cnt;
+  document.getElementById('statTotal').textContent = total;
+  // withdrawals
+  const wbox = document.getElementById('withdrawList'); wbox.innerHTML='';
+  for(const u in users){
+    users[u].withdrawals && users[u].withdrawals.forEach(w=>{
+      const el = document.createElement('div');
+      el.style.border='1px solid #eef6ff'; el.style.padding='8px'; el.style.marginBottom='6px';
+      el.innerHTML = `<div><strong>${u}</strong> - ${w.amount} টাকা - ${w.status}</div>
+        <div style="margin-top:6px">
+          ${w.status==='pending' ? `<button class="btn" onclick="adminApprove('${u}','${w.id}')">Approve</button> <button class="btn ghost" onclick="adminReject('${u}','${w.id}')">Reject</button>` : ''}
+        </div>`;
+      wbox.appendChild(el);
+    });
+  }
+}
+function adminViewUser(u){
+  const users = loadUsers();
+  const user = users[u];
+  alert(`User: ${u}\nName: ${user.name}\nBalance: ${user.balance}\nReferrals: ${user.referrals.length}\nCompleted tasks: ${Object.keys(user.completedTasks||{}).length}`);
+}
+function adminResetUser(u){
+  if(!confirm('Reset user data?')) return;
+  const users = loadUsers();
+  users[u].balance = 0; users[u].completedTasks = {}; users[u].withdrawals = []; users[u].lastCheckIn = null;
+  saveUsers(users); renderAdmin(); updateUI(); alert('Reset হয়েছে (ডেমো)');
+}
+function adminApprove(u,id){
+  const users = loadUsers();
+  const user = users[u];
+  const w = user.withdrawals.find(x=>x.id===id);
+  if(!w) return;
+  w.status='approved';
+  saveUsers(users);
+  renderAdmin(); updateUI();
+  alert('Approve করা হলো (ডেমো — বাস্তবে পেমেন্ট করা হয়নি)');
+}
+function adminReject(u,id){
+  const users = loadUsers();
+  const user = users[u];
+  const w = user.withdrawals.find(x=>x.id===id);
+  if(!w) return;
+  w.status='rejected';
+  // refund amount
+  user.balance += w.amount;
+  saveUsers(users);
+  renderAdmin(); updateUI();
+  alert('Reject — টাকা ইউজ
