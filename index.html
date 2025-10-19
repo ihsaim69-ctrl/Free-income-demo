@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Income Site</title>
+  <style>
+    body {
+      font-family: "Noto Sans Bengali", sans-serif;
+      text-align: center;
+      background: #e6f2ff;
+      color: #003366;
+      padding: 20px;
+    }
+    h1 {
+      color: #007bff;
+    }
+    .balance {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 10px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      display: block;
+      width: 90%;
+      max-width: 300px;
+      margin: 10px auto;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .msg {
+      margin-top: 15px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💰 Free Income Site</h1>
+  <div class="balance">বর্তমান ব্যালেন্স: <span id="balance">0</span> টাকা</div>
+
+  <button onclick="completeTask(5)">📱 অ্যাপ ডাউনলোড করুন</button>
+  <button onclick="completeTask(2)">🧭 ডেইলি চেকইন</button>
+  <button onclick="completeTask(3)">🎬 বিজ্ঞাপন দেখুন</button>
+
+  <div class="msg" id="msg"></div>
+
+  <script>
+    let balance = 0;
+    function completeTask(amount) {
+      balance += amount;
+      document.getElementById('balance').textContent = balance;
+      document.getElementById('msg').textContent = `✅ টাস্ক সম্পন্ন! ${amount} টাকা যোগ হয়েছে।`;
+      setTimeout(() => { document.getElementById('msg').textContent = ''; }, 2000);
+    }
+  </script>
+
+</body>
+</html>
